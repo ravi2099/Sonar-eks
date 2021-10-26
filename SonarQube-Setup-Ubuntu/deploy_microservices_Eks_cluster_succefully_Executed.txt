@@ -1,0 +1,315 @@
+Create EKS Cluster using eksctl:
+_____________________________________
+
+step0)
+
+create role with AWSAdminfull access and AmazonEC2ContainerRegistryFullAccess
+
+step1)Install the AWS CLI
+
+https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html(website)
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+
+step2)
+Install eksctl
+
+
+https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html(website)
+
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+
+ 
+
+step3)
+[root@ip-172-31-31-112 opt]# aws configure
+
+AWS Access Key ID [None]: <DDDDDDDDDDDDDDDD>
+AWS Secret Access Key [None]: <PPPPPPPPPPPPPPPPPPPPPPPPPPPP>
+Default region name [None]: us-west-2
+Default output format [None]: json
+[root@ip-172-31-31-112 opt]# aws eks --region us-west-2 describe-cluster --name QA-eks-jenkins-cluster --query cluster.status
+"ACTIVE"
+
+step4)
+curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+
+curl -o kubectl hhttps://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/arm64/kubectl
+
+
+****************************************************************************
+Step5:
+https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
+
+curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+kubectl version --short --client
+
+*******************************************************************************
+Step6:
+step5)
+aws eks --region us-west-2 update-kubeconfig --name QA-eks-jenkins-cluster
+aws eks --region us-east-2 update-kubeconfig --name dev-eks-jenkins-ohio-cluster
+
+Step7;
+
+[root@ip-172-31-31-112 opt]# kubectl get svc(Master Node)
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   3h14m
+***********************************************************************
+
+Create yaml file
+vi azure-vote.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-back
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-vote-back
+  template:
+    metadata:
+      labels:
+        app: azure-vote-back
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: azure-vote-back
+        image: mcr.microsoft.com/oss/bitnami/redis:6.0.8
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 6379
+          name: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-vote-back
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: azure-vote-back
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azure-vote-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: azure-vote-front
+  template:
+    metadata:
+      labels:
+        app: azure-vote-front
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: azure-vote-front
+        image: mcr.microsoft.com/azuredocs/azure-vote-front:v1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        ports:
+        - containerPort: 80
+        env:
+        - name: REDIS
+          value: "azure-vote-back"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: azure-vote-front
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: azure-vote-front
+********************************************************************
+kubectl apply -f azure-vote.yaml
+get the loadbalcer IP Adrees or dns name and check in browser will open the application.
+***********************************************************************
+Completed succesfully
+***********************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+step3)
+
+https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html(website)
+
+Kubernetes 1.19:
+curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-1.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+
+openssl sha1 -sha256 kubectl
+chmod +x ./kubectl
+kubectl version --short --client
+
+step4)
+
+https://docs.aws.amazon.com/eks/latest/userguide/install-aws-iam-authenticator.html
+
+
+step6)
+
+eksctl create cluster --name demo-eks --region us-east-1 --nodegroup-name my-nodes --node-type t3.small --managed
+
+step7) sudo cat ~/.kube/config
+
+
+step8)
+
+set a clusterrole as cluster-admin
+
+kubectl create clusterrolebinding cluster-system-anonymous -clusterrole=clusteradmin --user =system:anonymous
+
+step9)
+
+pipeline code
+
+*************************************************************************
+
+node{
+    def buildNumber= Build_Number
+    stage('SCM checkout')
+    {
+   //  checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://bitbucket.org/ananthkannan/myawesomeangularapprepo']]])
+     checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/chavaliInfy/spring-boot-docker-mysql.git']]])
+        
+    }
+    stage('Mvn Package')
+    {
+    def mvnHome = tool name: 'maven3', type: 'maven'
+    def mvnCMD = "${mvnHome}/bin/mvn"
+    sh "${mvnCMD} clean package"
+    } 
+    stage('Build docker Image')
+    {
+    sh "docker build -t dockerchavaliid/spring-boot-docker-mysql:${buildNumber} . "
+    }
+    
+    stage('Push Docker Image to registry')
+    {
+      sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 815481251073.dkr.ecr.us-east-1.amazonaws.com'         
+      sh  'docker push 815481251073.dkr.ecr.us-east-1.amazonaws.com/repo_ecr_asp:latest'  
+    } 
+
+    stage('Stop the previous Containers'){
+       sh 'docker ps -f name=mypythonContainer -q | xargs --no-run-if-empty docker container stop' 
+       sh 'docker container ls -a -fname=mypythonContainer -q | xargs -r docker container rm'
+    }
+    stage('Docker Run'){
+     sh 'docker run -d -p 8090:5000 --rm --name mypythonContainer 815481251073.dkr.ecr.us-east-1.amazonaws.com/repo_ecr_asp:latest'
+    } 
+ }
+
+***************************************************************************************************
+
+deployment.yaml
+**************************************************************************************************
+
+apiVersion: extensions/v1
+kind: Deployment
+
+metadata:
+   labels:
+     app.kubernetes.io/name: my-eks-deployment
+     app.kubernetes.io/instance: my-eks-instance
+     app.kubernetes.io/version: '1.0.0'
+     app.kubernetes.io/managed-by: kubectl
+   name: my-eks-deployment
+spec:
+    replicas: 1
+    selector:
+    matchLabels:
+       app: my-eks-demo
+    template:
+      metadata:
+       labels:
+         app: my-eks-demo
+      spec:
+       containers:
+         - name: my-eks-demo
+           image: spring-boot-docker-mysql:latest
+           imagePullPolicy: Always
+           ports:
+           - containerPort: 8095
+*****************************************************************************************************           
+# service type LoadBalancer
+---
+apVersion: v1
+kind: Service
+metadata:
+    name: angular-app-svc
+spec:
+   selector:
+     app: angular-app
+   ports:
+     - protocol: TCP
+       port: 8095
+       targetPort: 8095
+   type: LoadBalancer 
+************************************************************************************
+kubectl
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>PermanentRedirect</Code><Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message><Endpoint>amazon-eks.s3-us-west-2.amazonaws.com</Endpoint><Bucket>amazon-eks</Bucket><RequestId>DMK7H14X5BG78HPD</RequestId><HostId>fW1rROKmDEK51czqWkDOajfnisoS59JleDnRM3pjls2iM6bepf4CgfJGZHETrZ/+DD0+JCcOlco=</HostId></Error>
+*******************************************************************************************   
+           
+      
+
+

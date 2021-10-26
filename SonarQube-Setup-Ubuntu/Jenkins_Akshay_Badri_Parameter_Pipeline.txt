@@ -1,0 +1,19 @@
+[11:47 AM] Akshay badri
+pipeline{
+agent any
+stages{
+stage("Kubectl Exec"){
+steps{
+sh '''kubectl get pods -n imo | grep customer-${Country_Code} | awk \'{print $1}\' > pod.txt
+while IFS= read -r line; do
+echo "Pod Name: $line"
+kubectl exec $line -n imo -- bash -c "su - www-data -s /bin/bash -c \'${Command}\'"
+done < pod.txt'''
+}
+}
+}
+}
+
+[11:47 AM] Akshay badri
+date && echo 1 && echo $(whoami) && mkdir /tmp/test12 && ls -lt /tmp/ && touch /tmp/pod.txt && touch /tmp/pod1.txt && ls -l /tmp/pod.txt > /dev/null 2>&1 & && ls -l /tmp/pod1.txt > /dev/null 2>&1 &
+

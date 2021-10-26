@@ -1,0 +1,75 @@
+Create role and attache to ec2 instance
+___________________________________________
+AmazonEKSClusterPolicy
+AmazonEC2ContainerRegistryFullAccess
+**************************************************
+
+pipeline {
+    agent any 
+ //   environment {
+       // AWS_ACCOUNT_ID="955470930558"
+    //    AWS_DEFAULT_REGION="us-east-2" 
+     //   ECRURL='https://955470930558.dkr.ecr.us-east-2.amazonaws.com/ecr-dev-repo-jenkins-eks'
+      //  ECRCRED='ecr:us-east-2:'cred-dev-ecr-jenkins-eks-new'
+    //    IMAGE_REPO_NAME="ECR_REPO_NAME"
+      //  IMAGE_TAG="IMAGE_TAG"
+      //  REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+  //  }
+    stages {
+        stage("Git Clone")
+        {
+         steps
+          {
+               git branch: 'master', url: 'https://github.com/chavaliInfy/java-web-app-docker.git'
+              //   git branch: 'master', url: 'https://github.com/chavaliInfy/springboot-aws-rds.git'
+             
+          }
+        }
+        stage("Maven clean package")
+        {
+         steps
+          {
+           script{
+            def mvnHome = tool name: 'maven', type: 'maven'
+            def mvnCMD = "${mvnHome}/bin/mvn"
+            sh "${mvnCMD} clean package"
+            withSonarQubeEnv(credentialsId: 'sqtoken') 
+             withSonarQubeEnv('sonar')
+            {
+              sh "${mvnCMD} sonar:sonar"      
+            }
+            sh "${mvnCMD} sonar:sonar"
+           }
+          }
+        }
+        stage("Build Docker Image")
+        {
+         steps
+          {
+           script{
+            def buildNumber= BUILD_NUMBER   
+          //  sh "docker build -t ecr-dev-repo-jenkins-eks/java-web-app:${buildNumber} ."
+            sh "docker build -t ecr-dev-repo-jenkins-eks/java-web-app:latest ."
+           }
+          }
+        }
+         stage("ECR login")
+        {
+         steps
+          {
+          script
+          {      
+           withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'cred-dev-ecr-jenkins-eks-new', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) 
+        // docker.withRegistry("https://955470930558.dkr.ecr.us-east-2.amazonaws.com", "ecr:us-east-2:cred-dev-ecr-jenkins-eks-new")
+          {
+           sh 'docker tag ecr-dev-repo-jenkins-eks/java-web-app:latest 955470930558.dkr.ecr.us-east-2.amazonaws.com/ecr-dev-repo-jenkins-eks:latest'
+           sh 'aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 955470930558.dkr.ecr.us-east-2.amazonaws.com/ecr-dev-repo-jenkins-eks'
+           sh 'docker push 955470930558.dkr.ecr.us-east-2.amazonaws.com/ecr-dev-repo-jenkins-eks:latest'
+            
+          }    
+          }
+              
+          }
+        } 
+     }
+}
