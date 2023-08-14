@@ -30,23 +30,23 @@ step3)
 
 AWS Access Key ID [None]: <DDDDDDDDDDDDDDDD>
 AWS Secret Access Key [None]: <PPPPPPPPPPPPPPPPPPPPPPPPPPPP>
-Default region name [None]: us-west-2
+Default region name [None]: us-east-1
 Default output format [None]: json
-[root@ip-172-31-31-112 opt]# aws eks --region us-west-2 describe-cluster --name QA-eks-jenkins-cluster --query cluster.status
+[root@ip-172-31-31-112 opt]# aws eks --region us-east-1 describe-cluster --name QA-eks-jenkins-cluster --query cluster.status
 "ACTIVE"
 
 step4)
-curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-1.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
 curl -o kubectl https://amazon-eks.s3.us-east-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl
 
-curl -o kubectl hhttps://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/arm64/kubectl
+curl -o kubectl hhttps://amazon-eks.s3.us-east-1.amazonaws.com/1.21.2/2021-07-05/bin/linux/arm64/kubectl
 
 
 ****************************************************************************
 Step5:
 https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
 
-curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+curl -o kubectl https://amazon-eks.s3.us-east-1.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
 curl -o kubectl https://amazon-eks.s3.us-east-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
 mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
 echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
@@ -55,7 +55,7 @@ kubectl version --short --client
 *******************************************************************************
 Step6:
 step5)
-aws eks --region us-west-2 update-kubeconfig --name QA-eks-jenkins-cluster
+aws eks --region us-east-1 update-kubeconfig --name QA-eks-jenkins-cluster
 aws eks --region us-east-2 update-kubeconfig --name dev-eks-jenkins-ohio-cluster
 
 Step7;
